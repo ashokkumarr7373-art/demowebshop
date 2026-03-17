@@ -28,3 +28,5 @@ class BasePage:
 
     def get_title(self) -> str:
         return self.page.title()
+
+    
