@@ -9,16 +9,19 @@ class BasePage:
         self.page.goto(url)
 
     def click_button(self, locator):
-        self.page.locator.click()
+        locator.wait_for(state = "visible")
+        locator.click()
 
     def fill_input(self, locator, text):
-        self.page.locator.fill(text)
+        locator.wait_for(state="visible")
+        locator.fill(text)
 
     def get_text(self, locator):
-        return self.page.locator.text_content()
+        locator.wait_for(state="visible")
+        return locator.inner_text()
 
     def wait_for_visible(self, locator):
-        expect(self.page.locator).to_be_visible()
+        expect(locator).to_be_visible()
 
     def wait_for_url(self, url_part):
         expect(self.page).to_have_url(url_part)
@@ -29,4 +32,6 @@ class BasePage:
     def get_title(self) -> str:
         return self.page.title()
 
-    
+    def radio_box(self, selector):
+        selector.wait_for(state="visible")
+        selector.check()
