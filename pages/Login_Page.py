@@ -1,3 +1,4 @@
+import exact
 import page
 import playwright
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -27,6 +28,17 @@ class LoginPage(BasePage):
 
     def get_title(self):
         return self.page.title()
+
+    def assert_login(self):
+        welcome_message = self.page.locator(".topic-html-content-header")
+        return welcome_message.text_content()
+
+    def error_message(self):
+        return self.get_text("//div[@class='validation-summary-errors']")
+
+
+
+
 
     # def login_with_credentials(self, username, password):
     #     browser = playwright.chromium.launch(headless=False)
