@@ -56,6 +56,14 @@ class LoginPage:
     #
     # with sync_playwright() as playwright:
     #     run(playwright)
+    def login(self, username, password):
+        self.page.fill(self.USERNAME_INPUT, username)
+        self.page.fill(self.PASSWORD_INPUT, password)
+        self.page.click(self.LOGIN_BUTTON)
+
+    def navigate(self):
+        base_url = config["BASE_URL"]
+        self.page.goto(base_url)
 
     def login_with_credentials(self, username, password):
         browser = playwright.chromium.launch(headless=False)
