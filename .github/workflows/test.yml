@@ -25,25 +25,32 @@ jobs:
       run: |
         pip install pytest playwright allure-pytest
 
-    # ✅ Install browsers
+    # ✅ Install Playwright browsers
     - name: Install Playwright Browsers
       run: |
         playwright install --with-deps
 
-    # ✅ Run tests + generate allure results
+    # ✅ Run tests with Allure (IMPORTANT FIX)
     - name: Run Tests with Allure
       run: |
-        pytest --alluredir=./allure-results
+        mkdir -p allure-results
+        pytest test/ -s -v --alluredir=$(pwd)/allure-results
 
-    # ✅ Debug step (VERY IMPORTANT)
-    - name: Debug Allure Results
+    # ✅ Add environment info (helps Allure UI)
+    - name: Add Allure Environment Info
       run: |
-        echo "Listing project structure"
-        ls -R
-        echo "Checking allure-results folder"
-        ls -R allure-results || echo "allure-results folder not found"
+        echo "Browser=Chromium" >> allure-results/environment.properties
+        echo "Env=CI" >> allure-results/environment.properties
 
-    # ✅ Install Allure CLI properly
+    # ✅ Debug: check if results are generated
+    - name: Check Allure Results Files
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Allure results content:"
+        ls -la $(pwd)/allure-results
+
+    # ✅ Install Allure CLI (correct way)
     - name: Install Allure CLI
       run: |
         wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
@@ -56,10 +63,10 @@ jobs:
       run: |
         allure --version
 
-    # ✅ Generate report
+    # ✅ Generate Allure report (IMPORTANT FIX)
     - name: Generate Allure Report
       run: |
-        allure generate ./allure-results -o ./allure-report --clean
+        allure generate $(pwd)/allure-results -o $(pwd)/allure-report --clean
 
     # ✅ Upload report
     - name: Upload Allure Report
