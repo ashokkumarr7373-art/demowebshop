@@ -4,7 +4,7 @@ import playwright
 from playwright.sync_api import Playwright, sync_playwright, expect
 
 from pages.base_page import BasePage
-from tests import conftest
+from test import conftest
 
 
 class LoginPage(BasePage):
@@ -34,7 +34,8 @@ class LoginPage(BasePage):
         return welcome_message.text_content()
 
     def error_message(self):
-        return self.get_text("//div[@class='validation-summary-errors']")
+        error = self.page.locator("div.validation-summary-errors")
+        return error.text_content()
 
 
 

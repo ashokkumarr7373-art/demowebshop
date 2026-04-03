@@ -9,14 +9,16 @@ class BasePage:
         self.page.goto(url)
 
 
-    # def click_button(self, locator):
-    #     locator.click()
+    def click_button(self, locator):
+        locator.click()
 
     # def fill_input(self, locator, text):
     #     locator.fill(text)
 
     def get_text(self, selector):
-        return self.page.locator(selector).text_content()
+        locator = self.page.locator(selector)
+
+        return locator.inner_text()
 
     def wait_for_visible(self, selector):
         expect(self.page.locator(selector)).to_be_visible()
