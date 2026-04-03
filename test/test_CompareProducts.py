@@ -1,7 +1,7 @@
-import pytest
+# import pytest
 from playwright.sync_api import expect
 
-from test import conftest
+# from test import conftest
 from pages.select_catogory import SelectCategoryPage
 
 class TestProducts:

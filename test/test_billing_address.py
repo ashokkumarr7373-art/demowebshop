@@ -1,10 +1,10 @@
-import time
+# import time
 
 import allure
 
 from pages.billing_page import BillingPage
 from pages.product_page import AddToCartPage
-from playwright.sync_api import expect
+# from playwright.sync_api import expect
 
 def test_billing_address(page,login):
 
