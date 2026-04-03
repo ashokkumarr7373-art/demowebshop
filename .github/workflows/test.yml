@@ -10,27 +10,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # ✅ Checkout code
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # ✅ Setup Python
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
+    # ✅ Install dependencies
     - name: Install Dependencies
       run: |
         pip install pytest playwright allure-pytest
 
+    # ✅ Install browsers
     - name: Install Playwright Browsers
       run: |
         playwright install --with-deps
 
+    # ✅ Run tests + generate allure results
     - name: Run Tests with Allure
       run: |
-        pytest --alluredir=allure-results
+        pytest --alluredir=./allure-results
 
-    # ✅ Install Allure manually (FIXED)
+    # ✅ Debug step (VERY IMPORTANT)
+    - name: Debug Allure Results
+      run: |
+        echo "Listing project structure"
+        ls -R
+        echo "Checking allure-results folder"
+        ls -R allure-results || echo "allure-results folder not found"
+
+    # ✅ Install Allure CLI properly
     - name: Install Allure CLI
       run: |
         wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
@@ -38,7 +51,7 @@ jobs:
         sudo mv allure-2.27.0 /opt/allure
         sudo ln -s /opt/allure/bin/allure /usr/bin/allure
 
-    # ✅ Verify Allure installed (debug step)
+    # ✅ Verify installation
     - name: Verify Allure Installation
       run: |
         allure --version
@@ -46,7 +59,7 @@ jobs:
     # ✅ Generate report
     - name: Generate Allure Report
       run: |
-        allure generate allure-results -o allure-report
+        allure generate ./allure-results -o ./allure-report --clean
 
     # ✅ Upload report
     - name: Upload Allure Report
