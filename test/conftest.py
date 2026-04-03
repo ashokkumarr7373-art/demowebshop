@@ -8,7 +8,7 @@ from pages.Login_Page import LoginPage
 def page():
     with sync_playwright() as playwright:
 
-        browser = playwright.chromium.launch(headless=False)
+        browser = playwright.chromium.launch(headless=True)
 
         context = browser.new_context()
         page = context.new_page()
