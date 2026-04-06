@@ -5,41 +5,53 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Checkout
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # 2. Python setup
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
+    # 3. Install dependencies
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest playwright allure-pytest pytest-playwright
 
+    # 4. Install Playwright browsers
     - name: Install Playwright Browsers
       run: playwright install --with-deps chromium
 
+    # 5. Run tests
     - name: Run Tests with Allure
       run: |
         rm -rf allure-results allure-report
         mkdir -p allure-results
         python -m pytest test/ -s -v --alluredir=allure-results
-      continue-on-error: true        # ← CRITICAL: don't stop if tests fail
+      continue-on-error: true
 
+    # 6. Validate results generated
     - name: Validate Allure Results
       run: |
         echo "=== Allure result files ==="
         find allure-results -type f | sort || echo "NO FILES FOUND"
-        echo "=== File count ==="
+        echo "=== Total file count ==="
         find allure-results -type f | wc -l
 
+    # 7. Install Allure CLI
     - name: Install Allure CLI
       run: |
         wget -q https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
@@ -48,13 +60,14 @@ jobs:
         sudo ln -sf /opt/allure/bin/allure /usr/bin/allure
         allure --version
 
+    # 8. Generate Allure HTML report
     - name: Generate Allure Report
       run: |
         allure generate allure-results -o allure-report --clean
-        echo "=== Report files generated ==="
+        echo "=== Report files ==="
         find allure-report -type f | head -20
 
-    # Option A: Upload full report folder as artifact
+    # 9. Upload as artifact (downloadable from Actions tab)
     - name: Upload Allure Report Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -62,11 +75,11 @@ jobs:
         path: allure-report/
         retention-days: 7
 
-    # Option B (Recommended): Publish to GitHub Pages
+    # 10. Deploy to GitHub Pages (viewable as live URL)
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
-      if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./allure-report
         publish_branch: gh-pages
+        force_orphan: true
