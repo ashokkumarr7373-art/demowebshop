@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout
+    # 1. Checkout main code
     - name: Checkout Code
       uses: actions/checkout@v4
 
@@ -35,51 +35,48 @@ jobs:
     - name: Install Playwright Browsers
       run: playwright install --with-deps chromium
 
-    # 5. Run tests
+    # 5. Run tests — continue even if tests fail so report still generates
     - name: Run Tests with Allure
       run: |
-        rm -rf allure-results allure-report
+        rm -rf allure-results
         mkdir -p allure-results
         python -m pytest test/ -s -v --alluredir=allure-results
       continue-on-error: true
 
-    # 6. Validate results generated
-    - name: Validate Allure Results
-      run: |
-        echo "=== Allure result files ==="
-        find allure-results -type f | sort || echo "NO FILES FOUND"
-        echo "=== Total file count ==="
-        find allure-results -type f | wc -l
+    # 6. Load previous report history from gh-pages (for trend charts)
+    - name: Get Allure History
+      uses: actions/checkout@v4
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages
+        path: gh-pages
 
-    # 7. Install Allure CLI
-    - name: Install Allure CLI
-      run: |
-        wget -q https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
-        tar -zxf allure-2.27.0.tgz
-        sudo mv allure-2.27.0 /opt/allure
-        sudo ln -sf /opt/allure/bin/allure /usr/bin/allure
-        allure --version
+    # 7. Build Allure report with history — THIS is the key fix
+    - name: Build Allure Report
+      uses: simple-elf/allure-report-action@v1.9
+      if: always()
+      with:
+        allure_results: allure-results
+        gh_pages: gh-pages
+        allure_report: allure-report
+        allure_history: allure-history
 
-    # 8. Generate Allure HTML report
-    - name: Generate Allure Report
-      run: |
-        allure generate allure-results -o allure-report --clean
-        echo "=== Report files ==="
-        find allure-report -type f | head -20
+    # 8. Publish to GitHub Pages
+    - name: Publish Allure Report to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: allure-history
+        force_orphan: false
 
-    # 9. Upload as artifact (downloadable from Actions tab)
+    # 9. Also upload as downloadable artifact
     - name: Upload Allure Report Artifact
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: allure-report
         path: allure-report/
         retention-days: 7
-
-    # 10. Deploy to GitHub Pages (viewable as live URL)
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./allure-report
-        publish_branch: gh-pages
-        force_orphan: true
