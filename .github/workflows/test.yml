@@ -10,47 +10,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ✅ Checkout code
+    # 1. Checkout
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # ✅ Setup Python
+    # 2. Python setup
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    # ✅ Install dependencies
+    # 3. Install deps
     - name: Install Dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install pytest playwright allure-pytest
 
-    # ✅ Install Playwright browsers
+    # 4. Install browsers
     - name: Install Playwright Browsers
       run: |
         playwright install --with-deps
 
-    # ✅ Run tests with Allure (IMPORTANT FIX)
+    # 5. Run tests + FORCE Allure results
     - name: Run Tests with Allure
       run: |
-        mkdir -p allure-results
-        pytest test/ -s -v --alluredir=$(pwd)/allure-results
+        rm -rf allure-results
+        mkdir allure-results
+        python -m pytest test/ -s -v --alluredir=allure-results
 
-    # ✅ Add environment info (helps Allure UI)
-    - name: Add Allure Environment Info
-      run: |
-        echo "Browser=Chromium" >> allure-results/environment.properties
-        echo "Env=CI" >> allure-results/environment.properties
-
-    # ✅ Debug: check if results are generated
-    - name: Check Allure Results Files
+    # 6. DEBUG (CRITICAL)
+    - name: Validate Allure Output
       run: |
         echo "Current directory:"
         pwd
-        echo "Allure results content:"
-        ls -la $(pwd)/allure-results
+        echo "Allure files:"
+        find allure-results -type f || echo "NO FILES FOUND"
 
-    # ✅ Install Allure CLI (correct way)
+    # 7. Install Allure CLI
     - name: Install Allure CLI
       run: |
         wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.tgz
@@ -58,17 +54,17 @@ jobs:
         sudo mv allure-2.27.0 /opt/allure
         sudo ln -s /opt/allure/bin/allure /usr/bin/allure
 
-    # ✅ Verify installation
+    # 8. Verify Allure
     - name: Verify Allure Installation
       run: |
         allure --version
 
-    # ✅ Generate Allure report (IMPORTANT FIX)
+    # 9. Generate report
     - name: Generate Allure Report
       run: |
-        allure generate $(pwd)/allure-results -o $(pwd)/allure-report --clean
+        allure generate allure-results -o allure-report --clean
 
-    # ✅ Upload report
+    # 10. Upload report
     - name: Upload Allure Report
       uses: actions/upload-artifact@v4
       with:
