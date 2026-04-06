@@ -1,12 +1,16 @@
 # import playwright
 import pytest
+import allure
 # from playwright.sync_api import sync_playwright
 
 # from test.conftest import login
 from pages.Login_Page import LoginPage
 
 
-
+@allure.title("Valid Login Test")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.feature("Login")
+@allure.story("User logs in with valid credentials")
 def test_valid_login(page):
     # print("Login successful")
     # login = login_with_credentials()
