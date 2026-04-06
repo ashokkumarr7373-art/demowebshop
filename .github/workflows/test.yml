@@ -35,23 +35,49 @@ jobs:
     - name: Install Playwright Browsers
       run: playwright install --with-deps chromium
 
-    # 5. Run tests
+    # 5. Run tests with full debug output
     - name: Run Tests with Allure
       run: |
         rm -rf allure-results
         mkdir -p allure-results
-        python -m pytest test/ -s -v --alluredir=allure-results
+
+        echo "========================================"
+        echo "REPO STRUCTURE - ALL PYTHON FILES"
+        echo "========================================"
+        find . -type f -name "*.py" | grep -v __pycache__ | sort
+
+        echo "========================================"
+        echo "LOOKING FOR TEST FOLDER"
+        echo "========================================"
+        ls -lah
+
+        echo "========================================"
+        echo "RUNNING PYTEST"
+        echo "========================================"
+        python -m pytest . -s -v --alluredir=allure-results --ignore=.github || true
+
+        echo "========================================"
+        echo "ALLURE RESULTS AFTER RUN"
+        echo "========================================"
+        find allure-results -type f | sort || echo "NO RESULT FILES FOUND"
+
+        echo "========================================"
+        echo "TOTAL RESULT FILES"
+        echo "========================================"
+        find allure-results -type f | wc -l
       continue-on-error: true
 
-    # 6. Install Java (needed for Allure CLI)
+    # 6. Setup Java for Allure CLI
     - name: Setup Java
       uses: actions/setup-java@v4
+      if: always()
       with:
         distribution: 'temurin'
         java-version: '17'
 
     # 7. Install Allure CLI
     - name: Install Allure CLI
+      if: always()
       run: |
         wget -q https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz
         tar -zxf allure-2.30.0.tgz
@@ -59,7 +85,7 @@ jobs:
         sudo ln -sf /opt/allure/bin/allure /usr/bin/allure
         allure --version
 
-    # 8. Load history from gh-pages branch
+    # 8. Load previous history from gh-pages
     - name: Load Allure History
       uses: actions/checkout@v4
       if: always()
@@ -68,24 +94,40 @@ jobs:
         ref: gh-pages
         path: gh-pages
 
-    # 9. Copy history into allure-results so trend charts work
+    # 9. Copy history so trend charts work
     - name: Copy History to Results
       if: always()
       run: |
         if [ -d "gh-pages/history" ]; then
-          echo "History found, copying..."
+          echo "✅ History found, copying..."
           cp -r gh-pages/history allure-results/history
         else
-          echo "No previous history found, skipping..."
+          echo "⚠️ No previous history found, first run"
         fi
 
     # 10. Generate Allure Report
     - name: Generate Allure Report
       if: always()
       run: |
+        echo "========================================"
+        echo "GENERATING ALLURE REPORT"
+        echo "========================================"
         allure generate allure-results -o allure-report --clean
-        echo "=== Report generated ==="
-        ls allure-report/
+
+        echo "========================================"
+        echo "REPORT FILES GENERATED"
+        echo "========================================"
+        find allure-report -type f | sort
+
+        echo "========================================"
+        echo "DATA FOLDER CHECK"
+        echo "========================================"
+        ls -lah allure-report/data/ || echo "❌ No data folder found"
+
+        echo "========================================"
+        echo "INDEX.HTML CHECK"
+        echo "========================================"
+        ls -lah allure-report/index.html || echo "❌ index.html missing"
 
     # 11. Deploy to GitHub Pages
     - name: Deploy to GitHub Pages
@@ -97,7 +139,7 @@ jobs:
         publish_dir: allure-report
         force_orphan: false
 
-    # 12. Upload as artifact backup
+    # 12. Upload as downloadable artifact
     - name: Upload Allure Report Artifact
       uses: actions/upload-artifact@v4
       if: always()
